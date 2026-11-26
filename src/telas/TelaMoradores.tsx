@@ -8,10 +8,12 @@ import {
   MORADOR_VAZIO,
 } from '../api/cadastrarMorador';
 import { editarMorador } from '../api/editarMorador';
+import { inativarMorador } from '../api/inativarMorador';
 import { listarMoradores, Morador } from '../api/listarMoradores';
 import { Sessao } from '../api/login';
 import { nomeDaUnidade, Unidade } from '../api/unidade';
 import { Botao } from '../componentes/Botao';
+import { ConfirmarInativacao } from '../componentes/ConfirmarInativacao';
 import { FormularioMorador } from '../componentes/FormularioMorador';
 import { mensagemDe } from '../servicos/http';
 import {
@@ -30,6 +32,7 @@ export function TelaMoradores({ sessao, unidade }: TelaMoradoresProps) {
   const [erro, setErro] = useState('');
   const [cadastrando, setCadastrando] = useState(false);
   const [editando, setEditando] = useState<Morador | null>(null);
+  const [inativando, setInativando] = useState<Morador | null>(null);
 
   async function carregar() {
     setCarregando(true);
@@ -64,6 +67,16 @@ export function TelaMoradores({ sessao, unidade }: TelaMoradoresProps) {
     await carregar();
   }
 
+  async function confirmarInativacao() {
+    if (!inativando) {
+      return;
+    }
+
+    await inativarMorador(sessao, inativando.id);
+    setInativando(null);
+    await carregar();
+  }
+
   return (
     <View style={styles.tela}>
       <Botao
@@ -92,11 +105,21 @@ export function TelaMoradores({ sessao, unidade }: TelaMoradoresProps) {
             </Text>
 
             <View style={styles.acoes}>
-              <Botao
-                rotulo="Editar morador"
-                variante="secundario"
-                aoTocar={() => setEditando(item)}
-              />
+              <View style={styles.acao}>
+                <Botao
+                  rotulo="Editar morador"
+                  variante="secundario"
+                  aoTocar={() => setEditando(item)}
+                />
+              </View>
+
+              <View style={styles.acao}>
+                <Botao
+                  rotulo="Inativar"
+                  variante="perigo"
+                  aoTocar={() => setInativando(item)}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -127,6 +150,14 @@ export function TelaMoradores({ sessao, unidade }: TelaMoradoresProps) {
           telefoneTravado
           aoSalvar={salvarEdicao}
           aoCancelar={() => setEditando(null)}
+        />
+      )}
+
+      {inativando && (
+        <ConfirmarInativacao
+          nome={inativando.nome}
+          aoConfirmar={confirmarInativacao}
+          aoCancelar={() => setInativando(null)}
         />
       )}
     </View>
@@ -167,7 +198,12 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   acoes: {
+    flexDirection: 'row',
+    gap: 10,
     marginTop: 12,
+  },
+  acao: {
+    flex: 1,
   },
   erro: {
     color: '#DC2626',
