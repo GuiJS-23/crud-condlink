@@ -9,14 +9,18 @@ interface Opcoes {
   corpo?: object;
 }
 
-// Uma função só para falar com a API. Ela monta a URL, põe o token no
-// cabeçalho Authorization, converte o corpo para JSON e trata o erro.
-export async function requisicao<T>(caminho: string, opcoes: Opcoes = {}): Promise<T> {
+export async function requisicao<T>(
+  caminho: string,
+  opcoes: Opcoes = {}
+): Promise<T> {
   if (!API_URL) {
     throw new Error('EXPO_PUBLIC_API_URL não definida: confira o arquivo .env');
   }
 
-  const cabecalhos: Record<string, string> = { 'Content-Type': 'application/json' };
+  const cabecalhos: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
   if (opcoes.token) {
     cabecalhos.Authorization = `Bearer ${opcoes.token}`;
   }
@@ -29,18 +33,19 @@ export async function requisicao<T>(caminho: string, opcoes: Opcoes = {}): Promi
 
   const dados = await resposta.json().catch(() => ({}));
 
-  // 401 COM token = o token venceu. Sem token (no login), 401 é senha errada,
-  // e a mensagem certa é a que a própria API mandou.
   if (resposta.status === 401 && opcoes.token) {
-    throw new Error('Sessão expirada. Saia e entre de novo.');
+    throw new Error('Sessão expirada. Saia e entre novamente.');
   }
+
   if (!resposta.ok) {
-    throw new Error(dados.error ?? `Erro ${resposta.status} ao chamar a API.`);
+    throw new Error(
+      dados.erro ?? dados.error ?? `Erro ${resposta.status} ao chamar a API.`
+    );
   }
+
   return dados as T;
 }
 
-// Transforma qualquer erro capturado num texto para mostrar na tela.
 export function mensagemDe(erro: unknown): string {
   return erro instanceof Error ? erro.message : 'Erro inesperado.';
 }
