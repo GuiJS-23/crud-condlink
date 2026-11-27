@@ -43,3 +43,4 @@ yarn-error.*
 # segredos: nunca vao para o GitHub
 .env
 curl/login.json
+/curl/login-teste.json
